@@ -1,0 +1,101 @@
+import org.apache.jena.rdf.model.*;
+import org.apache.jena.vocabulary.*;
+import org.apache.jena.util.*;
+import org.apache.tika.language.*;
+
+import java.io.*;
+import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.*;
+import summerprojectd.parser;
+
+public class PInter_Syno extends parser{
+     public void parser1Interaction(){}  
+     
+     public static void main(String[] args) {
+         
+      LanguageIdentifier identifier = new LanguageIdentifier("this is english ");
+      String language = identifier.getLanguage();
+   
+            Model model=ModelFactory.createDefaultModel();
+            String ProtURI="https://bio2vec.net/";
+            String ResouURI="http://www.w3.org/2000/01/rdf-schema#resource";
+            String RightsURI="http://purl.org/dc/elements/1.1/source";
+            String SynoURI="http://www.w3.org/2004/02/skos/core#altLabel";
+            String Type="https://www.uniprot.org";
+            Resource Prot1=null; 
+            
+            Resource Prot2=null;
+            Property hasInteraction=null;
+            
+            String Synonyms =null;
+            Property hasSynonyms=null;
+            
+            String Relationship=null;
+            Property hasRelationship=null;
+            
+            File file1=null;
+            
+            String line;
+            
+		try {
+			File file = new File("Data/9606.protein.actions.v10.5.txt");
+			FileReader fileReader = new FileReader(file);
+			BufferedReader bufferedReader = new BufferedReader(fileReader);
+                        bufferedReader.readLine();
+			StringBuffer stringBuffer = new StringBuffer();
+			
+                        file1 = new File("Data/9606.protein.aliases.v10.5.txt");
+                        FileReader fileReader2 = new FileReader(file1);
+                        BufferedReader bufferedReader2 = new BufferedReader(fileReader2);
+                        bufferedReader2.readLine();
+                        StringBuffer stringBuffer2 = new StringBuffer();
+                        
+                        
+			while ((line=bufferedReader.readLine()) != null) {
+                            line = bufferedReader.readLine();
+                            String[] list1=line.split("\t");
+                            if (list1.length < 2) continue;
+                            
+                            
+                            Prot1=model.createResource(ProtURI+list1[0]);
+                            hasInteraction=model.createProperty(ResouURI);
+                            Prot2=model.createResource(ProtURI+list1[1]);
+                            Prot1.addProperty(hasInteraction,Prot2);
+                                                        
+			}fileReader.close();
+                 System.out.println(stringBuffer.toString());  
+ 
+                    
+                    while ((line=bufferedReader2.readLine()) != null) {
+                   line = bufferedReader2.readLine();
+                    String[] list1=line.split("\t");
+                    if (list1.length < 2) continue;
+                     
+                     Prot1=model.createResource(ProtURI+list1[0]);
+                     hasSynonyms=model.createProperty(SynoURI);
+                     Synonyms=list1[1]+" @"+language;
+                     Prot1.addProperty(hasSynonyms,Synonyms);
+                     
+                     hasRelationship=model.createProperty(RightsURI);
+                     Relationship=list1[2];
+                     Prot1.addProperty(hasRelationship,Relationship);
+                     
+                    fileReader.close();
+                     }fileReader2.close(); 
+                 System.out.println(stringBuffer.toString());
+                        
+		} catch (IOException e) {
+			e.printStackTrace();}
+                
+      try(OutputStream out = new FileOutputStream("Data/General_Protens.txt")) {
+        RDFDataMgr.write(out, model, org.apache.jena.riot.RDFFormat.RDFXML_PLAIN);
+    } catch (FileNotFoundException e) {
+        e.printStackTrace();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+}
