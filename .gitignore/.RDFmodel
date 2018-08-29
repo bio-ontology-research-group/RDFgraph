@@ -1,0 +1,119 @@
+import java.io.*;
+import java.util.*;
+
+
+import org.apache.jena.ext.com.google.common.collect.*;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.tika.language.LanguageIdentifier;
+
+public class GeneralProt {
+    public static void main(String[] args) throws IOException {
+        
+        LanguageIdentifier identifier = new LanguageIdentifier("this is english ");
+      String language = identifier.getLanguage();
+        
+     Model model3=ModelFactory.createDefaultModel();
+     String ProtURI="https://bio2vec.net/";
+     String LabelURI="http://www.w3.org/2000/01/rdf-schema#label";
+     String ResouURI="http://www.w3.org/2000/01/rdf-schema#resource";
+     String GeneURI="http://www.w3.org/2004/02/skos/core#related";
+     String DesURI="http://purl.org/dc/elements/1.1/description";
+     String LangURI="http://purl.org/dc/elements/1.1/language";
+     String RightsURI="http://purl.org/dc/elements/1.1/source";
+     String SynoURI="http://www.w3.org/2004/02/skos/core#altLabel";
+        
+     String Type="https://www.uniprot.org";
+     Resource Prot=null;
+    
+     String Label =null;
+     Property hasLabel=null;
+    
+     String Description=null;
+     Property hasDescrip=null;
+    
+     String GeneName=null;
+     Property hasGene=null;
+    
+    
+    HashMap<String, String> entryNameMap = new HashMap<String, String>();
+      
+      try{ 
+        BufferedReader reader = new BufferedReader(new FileReader("Data/stitch_uniprot.txt"));       
+	String line=null;
+        
+        line = reader.readLine();
+        while (line != null) {
+            String[] list1=line.split("\t");
+            entryNameMap.put(list1[1], list1[0]);
+            line = reader.readLine();   
+            //System.out.println(list1[0]);
+            //System.out.println(list1[1]);
+            //System.out.println(line);
+            //System.out.println(entryNameMap.get(list1[1]));
+        } reader.close();
+      }catch (FileNotFoundException e) {
+            e.printStackTrace();}
+            
+      try{
+        BufferedReader reader1 = new BufferedReader(new FileReader("Data/uniprot-.tab"));
+        String line = reader1.readLine();
+        boolean first = true;
+        String stitch;
+        String uniprot;
+        while (line != null) {
+            if (first){
+                first = false;
+                continue;}
+            String[] list1=line.split("\t");
+            uniprot = list1[0];
+            //System.out.println(uniprot);
+            if (entryNameMap.containsKey(uniprot)){
+                 stitch = entryNameMap.get(uniprot);
+                //System.out.println(uniprot);
+                //System.out.println(stitch);
+            }else{
+                 line = reader1.readLine();
+                 continue;}
+            
+            //General_protein subject
+            Prot=model3.createResource(ProtURI+stitch);
+                     
+             //Genes
+             hasGene=model3.createProperty(GeneURI);//predicate
+             GeneName=list1[3]+" @"+language;
+             Prot.addProperty(hasGene,GeneName); 
+             
+             //Descrption
+             hasDescrip=model3.createProperty(DesURI);
+             Description=list1[5]+" @"+language;
+             Prot.addProperty(hasDescrip,Description);
+             
+             //type 
+             Prot.addProperty(RDF.type,Type);
+             
+             //label 
+             hasLabel=model3.createProperty(LabelURI);
+             Label=list1[2]+" @"+language;
+             Prot.addProperty(hasLabel,Label);
+             
+             line = reader1.readLine();       
+             
+        }reader1.close();
+        
+	} catch (FileNotFoundException e) {
+            e.printStackTrace();}
+      
+      
+    try(OutputStream out = new FileOutputStream("Data/Proteins.txt")) {
+   RDFDataMgr.write(out, model3, org.apache.jena.riot.RDFFormat.RDFXML_PLAIN);
+  } catch (FileNotFoundException e) {
+    e.printStackTrace();
+  } catch (IOException e) {
+    e.printStackTrace();} 
+    }
+  }
