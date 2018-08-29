@@ -1,0 +1,90 @@
+import java.io.*;
+import java.util.*;
+
+
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.tika.language.LanguageIdentifier;
+
+public class edgelist {
+    public static void main(String[] args) throws IOException {
+        Model model3=ModelFactory.createDefaultModel();
+        
+        Resource node1=null;
+        Resource node2=null;
+        Property hasEdgeName=null;
+        
+        
+        
+        HashMap<String, String> entryNameMap = new HashMap<String, String>();
+      try{ 
+        BufferedReader reader = new BufferedReader(new FileReader("Data/mapping_WalkingRDFOWL.txt"));       
+	String line=null;
+        
+        line = reader.readLine();
+        while (line != null) {
+            String[] list1=line.split("\t");
+            entryNameMap.put(list1[1], list1[0]);
+            line = reader.readLine();
+            } reader.close();
+      }catch (FileNotFoundException e) {
+            e.printStackTrace();}
+      
+      try{
+        BufferedReader reader1 = new BufferedReader(new FileReader("Data/edgelist_WalkingRDFOWL.txt"));
+        String line = reader1.readLine();
+        boolean first = true;
+       
+        while (line != null) {
+            if (first){
+                first = false;
+                continue;}
+            
+            String[] list1=line.split(" ");
+            String id1 = list1[0]; String id2; 
+            String id3=list1[1];   String id5; 
+            String id4=list1[2];   String id6; 
+            
+            
+            
+           if (entryNameMap.containsKey(id1)){
+                  id2 = entryNameMap.get(id1);
+           }else{
+                 line = reader1.readLine();
+                 continue;}
+           
+            if (entryNameMap.containsKey(id3)){
+                  id5 = entryNameMap.get(id3);
+           }else{
+                 line = reader1.readLine();
+                 continue;}
+            
+            if (entryNameMap.containsKey(id4)){
+                  id6 = entryNameMap.get(id4);
+           }else{
+                 line = reader1.readLine();
+                 continue;}
+            
+             node1=model3.createResource(id2);
+             node2=model3.createResource(id5);
+             hasEdgeName=model3.createProperty(id6);
+             node1.addProperty(hasEdgeName,node2);
+             
+            line = reader1.readLine(); 
+            }reader1.close();
+        
+	} catch (FileNotFoundException e) {
+            e.printStackTrace();}
+      
+      try(OutputStream out = new FileOutputStream("Data/edge.txt")) {
+      RDFDataMgr.write(out, model3, org.apache.jena.riot.RDFFormat.NTRIPLES);
+      }catch (FileNotFoundException e) {
+      e.printStackTrace();
+      }catch (IOException e) {
+      e.printStackTrace();}
+    }
+}
